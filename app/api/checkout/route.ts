@@ -4,9 +4,7 @@ import { NextResponse } from "next/server";
 export async function POST(req: Request) {
   try {
     const { email } = await req.json();
-    const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string, {
-      apiVersion: "2024-06-20",
-    });
+    const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string);
 
     const price = process.env.STRIPE_PRICE_ID as string; // monthly $2.99 price id
     if (!price) {
