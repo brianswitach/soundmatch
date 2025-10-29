@@ -1,15 +1,19 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #011936; /* Set base to Oxford Blue */
+  --foreground: #ededed; /* Light text on dark bg */
+  /* SoundMatch palette */
+  --sm-red: #ED254E;       /* Red (Crayola) */
+  --sm-yellow: #F9DC5C;    /* Naples yellow */
+  --sm-green: #C2EABD;     /* Tea green */
+  --sm-navy: #011936;      /* Oxford Blue */
+  --sm-charcoal: #465362;  /* Charcoal */
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -20,7 +24,97 @@
 }
 
 body {
-  background: var(--background);
+  background:
+    radial-gradient(1200px 600px at 50% -200px, rgba(237, 37, 78, 0.18), transparent 60%),
+    radial-gradient(800px 400px at 10% 10%, rgba(249, 220, 92, 0.12), transparent 50%),
+    radial-gradient(900px 500px at 90% 20%, rgba(194, 234, 189, 0.08), transparent 50%),
+    linear-gradient(180deg, #021a3a 0%, var(--sm-navy) 60%, #021526 100%);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans), system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+}
+
+/* Custom animations and effects */
+@keyframes gradient-x {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+.animate-gradient-x {
+  background-size: 200% 200%;
+  animation: gradient-x 8s ease infinite;
+}
+
+.animate-spin-slow {
+  animation: spin 6s linear infinite;
+}
+
+.glow-card {
+  transition: box-shadow 200ms ease, transform 200ms ease;
+}
+
+.glow-card:hover {
+  box-shadow: 0 8px 30px rgba(99, 102, 241, 0.18), 0 0 0 1px rgba(99, 102, 241, 0.15);
+  transform: translateY(-2px);
+}
+
+/* SoundMatch themed helpers */
+.btn-accent {
+  background-color: var(--sm-red);
+}
+.btn-accent:hover {
+  filter: brightness(1.06);
+}
+
+.disc-gradient {
+  background: linear-gradient(135deg, var(--sm-navy), var(--sm-charcoal));
+}
+
+.text-gradient-primary {
+  background: linear-gradient(90deg, var(--sm-red), var(--sm-yellow), var(--sm-green));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.neon-title {
+  color: var(--sm-yellow);
+  text-shadow:
+    0 0 6px rgba(249, 220, 92, 0.9),
+    0 0 18px rgba(237, 37, 78, 0.7),
+    0 0 36px rgba(1, 25, 54, 0.6);
+}
+
+.font-display {
+  font-family: var(--font-display), var(--font-sans), sans-serif;
+}
+
+/* Neon equalizer */
+.neon-bars {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  height: 36px;
+}
+.neon-bar {
+  width: 6px;
+  border-radius: 9999px;
+  box-shadow: 0 0 10px currentColor, 0 0 20px currentColor;
+  animation: eqPulse 1.2s ease-in-out infinite;
+}
+.neon-bar:nth-child(1) { color: var(--sm-red); animation-delay: 0s; }
+.neon-bar:nth-child(2) { color: var(--sm-yellow); animation-delay: .1s; }
+.neon-bar:nth-child(3) { color: var(--sm-green); animation-delay: .2s; }
+.neon-bar:nth-child(4) { color: var(--sm-navy); animation-delay: .3s; }
+.neon-bar:nth-child(5) { color: var(--sm-charcoal); animation-delay: .4s; }
+.neon-bar:nth-child(6) { color: var(--sm-red); animation-delay: .5s; }
+.neon-bar:nth-child(7) { color: var(--sm-yellow); animation-delay: .6s; }
+.neon-bar:nth-child(8) { color: var(--sm-green); animation-delay: .7s; }
+.neon-bar:nth-child(9) { color: var(--sm-navy); animation-delay: .8s; }
+.neon-bar:nth-child(10) { color: var(--sm-charcoal); animation-delay: .9s; }
+
+@keyframes eqPulse {
+  0%, 100% { height: 8px; opacity: .9; }
+  40% { height: 36px; opacity: 1; }
+  70% { height: 18px; opacity: .95; }
 }
