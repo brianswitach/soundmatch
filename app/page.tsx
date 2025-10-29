@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import { useChat } from "@ai-sdk/react";
 import { motion } from "framer-motion";
-import { Disc3, Music2, Sparkles, Vinyl } from "lucide-react";
+import { Disc3, Music2, Sparkles } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 export default function Home() {
