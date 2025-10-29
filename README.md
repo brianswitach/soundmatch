@@ -23,3 +23,5 @@ Configuralas en Vercel (Project → Settings → Environment Variables):
 - Importá este repo en Vercel y definí las variables.
 - Stripe Checkout ya está integrado en `/api/checkout`.
 
+
+Note: Become Pro redirects to Mercado Pago via /api/mp/create-preference.
