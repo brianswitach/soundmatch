@@ -17,17 +17,30 @@ export default function RegisterPage() {
     });
   }, [supabase, router]);
 
+  const withTimeout = async <T,>(p: Promise<T>, ms = 15000): Promise<T> => {
+    return await Promise.race([
+      p,
+      new Promise<T>((_, reject) => setTimeout(() => reject(new Error("Tiempo de espera agotado")), ms)),
+    ]) as T;
+  };
+
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
-    const { error } = await supabase.auth.signUp({ email, password });
-    setLoading(false);
-    if (error) {
-      setError(error.message);
-      return;
+    try {
+      const { error } = await withTimeout(supabase.auth.signUp({ email, password }));
+      if (error) {
+        setError(error.message);
+        return;
+      }
+      // La mayoría de los proyectos requieren confirmación de email
+      router.push("/login");
+    } catch (err: any) {
+      setError(err?.message ?? "Ocurrió un error al registrarte");
+    } finally {
+      setLoading(false);
     }
-    router.push("/login");
   };
 
   return (

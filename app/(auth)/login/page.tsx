@@ -17,17 +17,35 @@ export default function LoginPage() {
     });
   }, [supabase, router]);
 
+  const withTimeout = async <T,>(p: Promise<T>, ms = 15000): Promise<T> => {
+    return await Promise.race([
+      p,
+      new Promise<T>((_, reject) => setTimeout(() => reject(new Error("Tiempo de espera agotado")), ms)),
+    ]) as T;
+  };
+
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
-    setLoading(false);
-    if (error) {
-      setError(error.message);
-      return;
+    try {
+      const { error } = await withTimeout(
+        supabase.auth.signInWithPassword({ email, password })
+      );
+      if (error) {
+        const msg =
+          error.message === "Email not confirmed"
+            ? "Debés confirmar tu email desde el enlace que te enviamos."
+            : error.message;
+        setError(msg);
+        return;
+      }
+      router.push("/");
+    } catch (err: any) {
+      setError(err?.message ?? "Ocurrió un error al iniciar sesión");
+    } finally {
+      setLoading(false);
     }
-    router.push("/");
   };
 
   return (
