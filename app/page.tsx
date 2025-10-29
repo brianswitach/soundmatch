@@ -7,7 +7,7 @@ import { Disc3, Music2, Sparkles } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 export default function Home() {
-  const { messages, sendMessage, status } = useChat();
+  const { messages, sendMessage, status, setMessages, stop } = useChat();
   const [input, setInput] = useState("");
   const isLoading = status === "submitted" || status === "streaming";
   const router = useRouter();
@@ -134,6 +134,10 @@ export default function Home() {
             e.preventDefault();
             const text = input.trim();
             if (!text) return;
+            // Empezar una "conversación" nueva por cada búsqueda
+            // Detenemos cualquier stream previo, limpiamos mensajes y enviamos el nuevo prompt
+            stop?.();
+            setMessages?.([]);
             sendMessage({ text });
             setInput("");
           }}
