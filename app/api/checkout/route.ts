@@ -6,7 +6,7 @@ export async function POST(req: Request) {
     const { email } = await req.json();
     const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string);
 
-    const price = process.env.STRIPE_PRICE_ID as string; // monthly $2.99 price id
+    const price = process.env.STRIPE_PRICE_ID as string; // Price ID (one-time lifetime)
     if (!price) {
       return NextResponse.json({ error: "Missing STRIPE_PRICE_ID" }, { status: 500 });
     }
@@ -24,11 +24,12 @@ export async function POST(req: Request) {
       : await stripe.customers.create({ email });
 
     const session = await stripe.checkout.sessions.create({
-      mode: "subscription",
+      mode: "payment",
       customer: (customer as any).id,
       line_items: [{ price, quantity: 1 }],
       success_url: `${process.env.NEXT_PUBLIC_APP_URL}/pro/success`,
       cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/`,
+      allow_promotion_codes: true,
     });
 
     return NextResponse.json({ url: session.url });
