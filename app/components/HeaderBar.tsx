@@ -39,8 +39,18 @@ export default function HeaderBar() {
         </div>
       ) : (
         <div className="flex items-center gap-3">
-          <a className="underline" href="/login">Ingresar</a>
-          <a className="underline" href="/register">Registrarse</a>
+          <a
+            href="/login"
+            className="rounded-lg px-3 py-1.5 border border-white/15 text-zinc-100 hover:bg-white/5 shadow-sm"
+          >
+            Ingresar
+          </a>
+          <a
+            href="/register"
+            className="rounded-lg px-3 py-1.5 bg-[var(--sm-red)] text-white hover:brightness-110 shadow-md"
+          >
+            Registrarse
+          </a>
         </div>
       )}
     </header>
