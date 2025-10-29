@@ -7,8 +7,21 @@ export default function HeaderBar() {
   const supabase = createClientComponentClient();
   const [email, setEmail] = useState<string | null>(null);
   useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => setEmail(data.user?.email ?? null));
-  }, []);
+    let mounted = true;
+    supabase.auth.getUser().then(({ data }) => {
+      if (!mounted) return;
+      setEmail(data.user?.email ?? null);
+    });
+    const { data: sub } = supabase.auth.onAuthStateChange(async () => {
+      const { data } = await supabase.auth.getUser();
+      if (!mounted) return;
+      setEmail(data.user?.email ?? null);
+    });
+    return () => {
+      mounted = false;
+      sub.subscription.unsubscribe();
+    };
+  }, [supabase]);
   return (
     <header className="w-full flex items-center justify-end p-3 text-zinc-200">
       {email ? (
