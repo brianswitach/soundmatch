@@ -125,12 +125,11 @@ export default function Home() {
             </motion.button>
             <button
               onClick={async () => {
-                const email = prompt("Ingresá tu email para Pro ($2.99/mes)")?.trim();
-                if (!email) return;
-                const res = await fetch("/api/checkout", {
+                // Redirige a Mercado Pago sin pedir email
+                const res = await fetch("/api/mp/create-preference", {
                   method: "POST",
                   headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({ email }),
+                  body: JSON.stringify({ email: userEmail ?? undefined }),
                 });
                 const data = await res.json();
                 if (data.url) router.push(data.url);
@@ -139,6 +138,7 @@ export default function Home() {
             >
               Become Pro
             </button>
+            <div className="mt-2 text-xs text-zinc-400">Plan gratis</div>
         </div>
         </section>
 
