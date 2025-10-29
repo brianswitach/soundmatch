@@ -1,16 +1,29 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useChat } from "@ai-sdk/react";
 import { motion } from "framer-motion";
 import { Disc3, Music2, Sparkles } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 
 export default function Home() {
   const { messages, sendMessage, status, setMessages, stop } = useChat();
   const [input, setInput] = useState("");
   const isLoading = status === "submitted" || status === "streaming";
   const router = useRouter();
+  const supabase = createClientComponentClient();
+  const [userEmail, setUserEmail] = useState<string | null>(null);
+  const [showPaywall, setShowPaywall] = useState(false);
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => setUserEmail(data.user?.email ?? null));
+    const { data: sub } = supabase.auth.onAuthStateChange(async () => {
+      const { data } = await supabase.auth.getUser();
+      setUserEmail(data.user?.email ?? null);
+    });
+    return () => sub.subscription.unsubscribe();
+  }, [supabase]);
 
   const lastAssistant = useMemo(() => {
     for (let i = messages.length - 1; i >= 0; i -= 1) {
@@ -134,6 +147,17 @@ export default function Home() {
             e.preventDefault();
             const text = input.trim();
             if (!text) return;
+            // Free gating: guests get 2 usos
+            try {
+              if (!userEmail) {
+                const used = Number(localStorage.getItem("sm_uses") || "0");
+                if (used >= 2) {
+                  setShowPaywall(true);
+                  return;
+                }
+                localStorage.setItem("sm_uses", String(used + 1));
+              }
+            } catch {}
             // Empezar una "conversación" nueva por cada búsqueda
             // Detenemos cualquier stream previo, limpiamos mensajes y enviamos el nuevo prompt
             stop?.();
@@ -211,6 +235,55 @@ export default function Home() {
               </motion.article>
             ))}
           </motion.section>
+        )}
+
+        {showPaywall && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-6">
+            <div className="absolute inset-0 bg-black/70" onClick={() => setShowPaywall(false)} />
+            <div className="relative max-w-lg w-full rounded-2xl border border-white/15 bg-gradient-to-br from-[var(--sm-navy)] to-[var(--sm-charcoal)] p-6 text-zinc-100 shadow-2xl">
+              <div className="flex items-center gap-2 mb-3">
+                <Disc3 className="h-6 w-6 text-[var(--sm-yellow)]" />
+                <h3 className="text-2xl font-bold">Usos gratuitos agotados</h3>
+              </div>
+              <p className="text-zinc-300 mb-4">
+                Ya utilizaste tus 2 intentos gratuitos (máx. 300 tokens por respuesta). Desbloqueá
+                acceso ilimitado y respuestas más extensas con el plan <span className="font-semibold">PRO</span>.
+              </p>
+              <div className="rounded-xl p-4 mb-4 bg-white/5 border border-white/10">
+                <p className="text-xl font-semibold text-white">PRO • Lifetime</p>
+                <p className="text-3xl font-extrabold text-[var(--sm-yellow)]">US$ 1.99</p>
+                <ul className="mt-2 text-sm text-zinc-300 list-disc ml-5">
+                  <li>Respuestas sin límite</li>
+                  <li>Mejor calidad y menos cortes</li>
+                  <li>Soporte prioritario</li>
+                </ul>
+              </div>
+              <div className="flex flex-col sm:flex-row gap-3">
+                <button
+                  className="flex-1 rounded-xl bg-[var(--sm-red)] hover:brightness-110 text-white py-3 text-lg font-semibold shadow-lg"
+                  onClick={async () => {
+                    const email = userEmail || prompt("Ingresá tu email para continuar") || "";
+                    if (!email) return;
+                    const res = await fetch("/api/checkout", {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({ email }),
+                    });
+                    const data = await res.json();
+                    if (data.url) location.href = data.url;
+                  }}
+                >
+                  Comprar PRO • US$1.99
+                </button>
+                <button
+                  className="flex-1 rounded-xl border border-white/20 hover:bg-white/5 py-3 text-lg"
+                  onClick={() => setShowPaywall(false)}
+                >
+                  Cerrar
+                </button>
+              </div>
+            </div>
+          </div>
         )}
 
         {/* Se removieron Logs y Paleta para una UI más limpia */}

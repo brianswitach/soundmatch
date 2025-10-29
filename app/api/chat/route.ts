@@ -51,6 +51,7 @@ export async function POST(req: Request) {
     system: systemPrompt,
     messages: convertToModelMessages(messages),
     maxRetries: 0,
+    maxOutputTokens: 300,
   });
 
   return result.toUIMessageStreamResponse({ headers: { "x-model-used": modelId } });
