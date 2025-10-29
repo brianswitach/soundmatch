@@ -96,7 +96,7 @@ export default function Home() {
             <h1 className="text-5xl tracking-tight inline-flex items-center gap-2 neon-title font-display">
               <Music2 className="h-6 w-6 text-[var(--sm-red)]" />
               SoundMatch AI
-            </h1>
+          </h1>
           </div>
           <p
             className="mx-auto max-w-2xl text-gradient-primary animate-gradient-x font-light"
@@ -137,9 +137,9 @@ export default function Home() {
               }}
               className="ml-3 rounded-xl px-4 py-3 border border-white/15 text-zinc-100 hover:bg-white/5"
             >
-              Pro $2.99
+              Become Pro
             </button>
-          </div>
+        </div>
         </section>
 
         <form
@@ -283,7 +283,7 @@ export default function Home() {
                 </button>
               </div>
             </div>
-          </div>
+        </div>
         )}
 
         {/* Se removieron Logs y Paleta para una UI más limpia */}
