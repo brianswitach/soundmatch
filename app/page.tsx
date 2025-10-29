@@ -264,7 +264,7 @@ export default function Home() {
                   onClick={async () => {
                     const email = userEmail || prompt("Ingresá tu email para continuar") || "";
                     if (!email) return;
-                    const res = await fetch("/api/checkout", {
+                    const res = await fetch("/api/mp/create-preference", {
                       method: "POST",
                       headers: { "Content-Type": "application/json" },
                       body: JSON.stringify({ email }),
@@ -273,7 +273,7 @@ export default function Home() {
                     if (data.url) location.href = data.url;
                   }}
                 >
-                  Comprar PRO • US$1.99
+                  Comprar PRO
                 </button>
                 <button
                   className="flex-1 rounded-xl border border-white/20 hover:bg-white/5 py-3 text-lg"
