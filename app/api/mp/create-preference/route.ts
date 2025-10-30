@@ -8,9 +8,13 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Missing MP_ACCESS_TOKEN" }, { status: 500 });
     }
 
-    const success = `${process.env.NEXT_PUBLIC_APP_URL}/pro/success`;
-    const failure = `${process.env.NEXT_PUBLIC_APP_URL}/`;
-    const notificationUrl = `${process.env.NEXT_PUBLIC_APP_URL}/api/mp/webhook`;
+    const proto = req.headers.get("x-forwarded-proto") ?? "https";
+    const host = req.headers.get("host") ?? "";
+    const baseFromReq = host ? `${proto}://${host}` : "";
+    const base = (process.env.NEXT_PUBLIC_APP_URL || baseFromReq || "").replace(/\/$/, "");
+    const success = `${base}/pro/success`;
+    const failure = `${base}/`;
+    const notificationUrl = `${base}/api/mp/webhook`;
 
     const body = {
       items: [
