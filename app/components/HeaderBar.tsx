@@ -1,27 +1,22 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
+import { auth } from "@/lib/firebaseClient";
+import { onAuthStateChanged, signOut } from "firebase/auth";
 
 export default function HeaderBar() {
-  const supabase = createClientComponentClient();
   const [email, setEmail] = useState<string | null>(null);
   useEffect(() => {
     let mounted = true;
-    supabase.auth.getUser().then(({ data }) => {
+    const unsub = onAuthStateChanged(auth, (user) => {
       if (!mounted) return;
-      setEmail(data.user?.email ?? null);
-    });
-    const { data: sub } = supabase.auth.onAuthStateChange(async () => {
-      const { data } = await supabase.auth.getUser();
-      if (!mounted) return;
-      setEmail(data.user?.email ?? null);
+      setEmail(user?.email ?? null);
     });
     return () => {
       mounted = false;
-      sub.subscription.unsubscribe();
+      unsub();
     };
-  }, [supabase]);
+  }, []);
   return (
     <header className="w-full flex items-center justify-end p-3 text-zinc-200">
       {email ? (
@@ -30,7 +25,7 @@ export default function HeaderBar() {
           <button
             className="rounded-lg border border-white/15 px-3 py-1 hover:bg-white/5"
             onClick={async () => {
-              await supabase.auth.signOut();
+              await signOut(auth);
               location.href = "/";
             }}
           >

@@ -1,33 +1,29 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { getSupabaseClient } from "@/lib/supabaseClient";
+import { auth } from "@/lib/firebaseClient";
+import { createUserWithEmailAndPassword, onAuthStateChanged } from "firebase/auth";
 import { useRouter } from "next/navigation";
 
 export default function RegisterPage() {
-  const supabase = getSupabaseClient();
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => {
-      if (data.user) router.replace("/");
+    const unsub = onAuthStateChanged(auth, (user) => {
+      if (user) router.replace("/");
     });
-  }, [supabase, router]);
+    return () => unsub();
+  }, [router]);
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
     try {
-      const { error } = await supabase.auth.signUp({ email, password });
-      if (error) {
-        setError(error.message);
-        return;
-      }
-      // La mayoría de los proyectos requieren confirmación de email
+      await createUserWithEmailAndPassword(auth, email, password);
       router.push("/login");
     } catch (err: any) {
       console.error("register error", err);
