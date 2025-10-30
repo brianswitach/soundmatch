@@ -8,10 +8,17 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Missing MP_ACCESS_TOKEN" }, { status: 500 });
     }
 
+    const origin = (() => {
+      try {
+        return new URL(req.url).origin;
+      } catch {
+        return "";
+      }
+    })();
     const proto = req.headers.get("x-forwarded-proto") ?? "https";
     const host = req.headers.get("host") ?? "";
-    const baseFromReq = host ? `${proto}://${host}` : "";
-    const base = (process.env.NEXT_PUBLIC_APP_URL || baseFromReq || "").replace(/\/$/, "");
+    const baseFromReq = host ? `${proto}://${host}` : origin;
+    const base = (process.env.NEXT_PUBLIC_APP_URL || baseFromReq || origin || "").replace(/\/$/, "");
     const success = `${base}/pro/success`;
     const failure = `${base}/`;
     const notificationUrl = `${base}/api/mp/webhook`;
@@ -30,6 +37,10 @@ export async function POST(req: Request) {
       auto_return: "approved",
       notification_url: notificationUrl,
     };
+
+    if (!success) {
+      return NextResponse.json({ error: "config_error", details: "Missing success URL for Mercado Pago" }, { status: 500 });
+    }
 
     const res = await fetch("https://api.mercadopago.com/checkout/preferences", {
       method: "POST",
