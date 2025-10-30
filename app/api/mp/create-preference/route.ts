@@ -34,7 +34,6 @@ export async function POST(req: Request) {
       ],
       payer: email ? { email } : undefined,
       back_urls: { success, failure, pending: failure },
-      auto_return: "approved",
       notification_url: notificationUrl,
     };
 
