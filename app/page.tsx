@@ -134,7 +134,7 @@ export default function Home() {
               }}
               className="ml-3 rounded-xl px-4 py-3 border border-white/15 text-zinc-100 hover:bg-white/5"
             >
-              Become Pro
+              Hacete PRO
             </button>
             <div className="mt-2 text-xs text-zinc-400">Plan gratis</div>
         </div>

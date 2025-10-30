@@ -35,6 +35,7 @@ export async function POST(req: Request) {
     "4) No repitas artistas presentes en la entrada del usuario.",
     "5) Evitá recomendar el mismo tema o remixes triviales del mismo artista.",
     "6) Por cada recomendación, explicá brevemente por qué coincide con los rasgos comunes.",
+    "Idioma: RESPONDÉ SIEMPRE EN ESPAÑOL NEUTRO. No uses inglés salvo en títulos/artist names si corresponde.",
     "Reglas:",
     "- Priorizá similitud real por rasgos (no solo por género).",
     "- Usá EXCLUSIVAMENTE las canciones provistas por el usuario como base del análisis. No inventes canciones de entrada.",
