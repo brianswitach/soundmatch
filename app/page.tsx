@@ -5,25 +5,21 @@ import { useChat } from "@ai-sdk/react";
 import { motion } from "framer-motion";
 import { Disc3, Music2, Sparkles } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
+import { auth } from "@/lib/firebaseClient";
+import { onAuthStateChanged } from "firebase/auth";
 
 export default function Home() {
   const { messages, sendMessage, status, setMessages, stop } = useChat();
   const [input, setInput] = useState("");
   const isLoading = status === "submitted" || status === "streaming";
   const router = useRouter();
-  const supabase = createClientComponentClient();
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const [showPaywall, setShowPaywall] = useState(false);
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => setUserEmail(data.user?.email ?? null));
-    const { data: sub } = supabase.auth.onAuthStateChange(async () => {
-      const { data } = await supabase.auth.getUser();
-      setUserEmail(data.user?.email ?? null);
-    });
-    return () => sub.subscription.unsubscribe();
-  }, [supabase]);
+    const unsub = onAuthStateChanged(auth, (user) => setUserEmail(user?.email ?? null));
+    return () => unsub();
+  }, []);
 
   const lastAssistant = useMemo(() => {
     for (let i = messages.length - 1; i >= 0; i -= 1) {
