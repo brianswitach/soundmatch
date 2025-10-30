@@ -27,7 +27,7 @@ export default function RootLayout({
 }>) {
   // small client check to ensure session refresh via middleware
   return (
-    <html lang="en">
+    <html lang="es" suppressHydrationWarning>
       <body
         className={`${poppins.variable} ${bebas.variable} antialiased`}
       >
