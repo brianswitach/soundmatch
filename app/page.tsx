@@ -122,19 +122,10 @@ export default function Home() {
               Empezar
             </motion.button>
             <button
-              onClick={async () => {
-                // Redirige a Mercado Pago sin pedir email
-                const res = await fetch("/api/mp/create-preference", {
-                  method: "POST",
-                  headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({ email: userEmail ?? undefined }),
-                });
-                const data = await res.json();
-                if (data.url) router.push(data.url);
-              }}
+              onClick={() => setShowPaywall(true)}
               className="ml-3 rounded-xl px-4 py-3 border border-white/15 text-zinc-100 hover:bg-white/5"
             >
-              Hacete PRO
+              Plan gratis
             </button>
             <div className="mt-2 text-xs text-zinc-400">Plan gratis</div>
         </div>
