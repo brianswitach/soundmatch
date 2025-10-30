@@ -1,13 +1,15 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { auth } from "@/lib/firebaseClient";
+import { getFirebaseAuth } from "@/lib/firebaseClient";
 import { onAuthStateChanged, signOut } from "firebase/auth";
 
 export default function HeaderBar() {
   const [email, setEmail] = useState<string | null>(null);
   useEffect(() => {
     let mounted = true;
+    const auth = getFirebaseAuth();
+    if (!auth) return () => {};
     const unsub = onAuthStateChanged(auth, (user) => {
       if (!mounted) return;
       setEmail(user?.email ?? null);
@@ -25,7 +27,8 @@ export default function HeaderBar() {
           <button
             className="rounded-lg border border-white/15 px-3 py-1 hover:bg-white/5"
             onClick={async () => {
-              await signOut(auth);
+              const auth = getFirebaseAuth();
+              if (auth) await signOut(auth);
               location.href = "/";
             }}
           >

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { auth } from "@/lib/firebaseClient";
+import { getFirebaseAuth } from "@/lib/firebaseClient";
 import { createUserWithEmailAndPassword, onAuthStateChanged } from "firebase/auth";
 import { useRouter } from "next/navigation";
 
@@ -12,6 +12,8 @@ export default function RegisterPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   useEffect(() => {
+    const auth = getFirebaseAuth();
+    if (!auth) return;
     const unsub = onAuthStateChanged(auth, (user) => {
       if (user) router.replace("/");
     });
@@ -23,6 +25,8 @@ export default function RegisterPage() {
     setLoading(true);
     setError(null);
     try {
+      const auth = getFirebaseAuth();
+      if (!auth) throw new Error("Auth no disponible");
       await createUserWithEmailAndPassword(auth, email, password);
       router.push("/login");
     } catch (err: any) {

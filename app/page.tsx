@@ -5,7 +5,7 @@ import { useChat } from "@ai-sdk/react";
 import { motion } from "framer-motion";
 import { Disc3, Music2, Sparkles } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { auth } from "@/lib/firebaseClient";
+import { getFirebaseAuth } from "@/lib/firebaseClient";
 import { onAuthStateChanged } from "firebase/auth";
 
 export default function Home() {
@@ -17,6 +17,8 @@ export default function Home() {
   const [showPaywall, setShowPaywall] = useState(false);
 
   useEffect(() => {
+    const auth = getFirebaseAuth();
+    if (!auth) return;
     const unsub = onAuthStateChanged(auth, (user) => setUserEmail(user?.email ?? null));
     return () => unsub();
   }, []);

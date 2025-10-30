@@ -1,7 +1,5 @@
-"use client";
-
-import { initializeApp, getApps, getApp } from "firebase/app";
-import { getAuth } from "firebase/auth";
+import { initializeApp, getApps, getApp, type FirebaseApp } from "firebase/app";
+import { getAuth, type Auth } from "firebase/auth";
 
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -13,7 +11,20 @@ const firebaseConfig = {
   measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID,
 };
 
-export const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
-export const auth = getAuth(app);
+let cachedApp: FirebaseApp | null = null;
+
+export function getFirebaseApp(): FirebaseApp | null {
+  // Evitar inicializar en el servidor (build/prerender)
+  if (typeof window === "undefined") return null;
+  if (cachedApp) return cachedApp;
+  cachedApp = getApps().length ? getApp() : initializeApp(firebaseConfig);
+  return cachedApp;
+}
+
+export function getFirebaseAuth(): Auth | null {
+  const app = getFirebaseApp();
+  if (!app) return null;
+  return getAuth(app);
+}
 
 
