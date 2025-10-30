@@ -13,10 +13,22 @@ const firebaseConfig = {
 
 let cachedApp: FirebaseApp | null = null;
 
+function isValidConfig(cfg: typeof firebaseConfig): boolean {
+  // apiKey de Firebase Web suele empezar con "AIza"
+  const hasApiKey = typeof cfg.apiKey === "string" && cfg.apiKey.length > 0 && /^(AIza)/.test(cfg.apiKey);
+  const required = [cfg.authDomain, cfg.projectId, cfg.appId];
+  const haveRequired = required.every((v) => typeof v === "string" && v.length > 0);
+  return hasApiKey && haveRequired;
+}
+
 export function getFirebaseApp(): FirebaseApp | null {
   // Evitar inicializar en el servidor (build/prerender)
   if (typeof window === "undefined") return null;
   if (cachedApp) return cachedApp;
+  if (!isValidConfig(firebaseConfig)) {
+    console.warn("Firebase config ausente o inválida. Verificá tus NEXT_PUBLIC_FIREBASE_* env vars.");
+    return null;
+  }
   cachedApp = getApps().length ? getApp() : initializeApp(firebaseConfig);
   return cachedApp;
 }
