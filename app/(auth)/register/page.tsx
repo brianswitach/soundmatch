@@ -26,7 +26,10 @@ export default function RegisterPage() {
     setError(null);
     try {
       const auth = getFirebaseAuth();
-      if (!auth) throw new Error("Auth no disponible");
+      if (!auth) {
+        setError("Autenticación no disponible. Falta configurar Firebase en el entorno.");
+        return;
+      }
       await createUserWithEmailAndPassword(auth, email, password);
       router.push("/login");
     } catch (err: any) {
@@ -44,6 +47,11 @@ export default function RegisterPage() {
         className="w-full max-w-sm rounded-xl border border-white/10 bg-white/5 p-6 backdrop-blur-sm"
       >
         <h1 className="text-2xl font-semibold mb-4">Crear cuenta</h1>
+        {!getFirebaseAuth() && (
+          <p className="text-amber-300 text-sm mb-3">
+            Autenticación deshabilitada: completá las variables NEXT_PUBLIC_FIREBASE_* para habilitar el registro.
+          </p>
+        )}
         <label className="text-sm">Email</label>
         <input
           type="email"
