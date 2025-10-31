@@ -1,12 +1,14 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { getFirebaseAuth } from "@/lib/firebaseClient";
-import { createUserWithEmailAndPassword, onAuthStateChanged } from "firebase/auth";
+import { getFirebaseAuth, getFirebaseApp } from "@/lib/firebaseClient";
+import { createUserWithEmailAndPassword, onAuthStateChanged, updateProfile } from "firebase/auth";
+import { getFirestore, doc, setDoc } from "firebase/firestore";
 import { useRouter } from "next/navigation";
 
 export default function RegisterPage() {
   const router = useRouter();
+  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -30,7 +32,18 @@ export default function RegisterPage() {
         setError("Autenticación no disponible. Falta configurar Firebase en el entorno.");
         return;
       }
-      await createUserWithEmailAndPassword(auth, email, password);
+      const userCred = await createUserWithEmailAndPassword(auth, email, password);
+      await updateProfile(userCred.user, { displayName: name });
+      const app = getFirebaseApp();
+      if (app) {
+        const db = getFirestore(app);
+        await setDoc(doc(db, "users", userCred.user.uid), {
+          name,
+          email,
+          isPro: false,
+          createdAt: new Date().toISOString(),
+        });
+      }
       router.push("/login");
     } catch (err: any) {
       console.error("register error", err);
@@ -52,6 +65,14 @@ export default function RegisterPage() {
             Autenticación deshabilitada: completá las variables NEXT_PUBLIC_FIREBASE_* para habilitar el registro.
           </p>
         )}
+        <label className="text-sm">Nombre</label>
+        <input
+          type="text"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          required
+          className="mt-1 mb-3 w-full rounded-lg border border-white/15 bg-white/5 p-3"
+        />
         <label className="text-sm">Email</label>
         <input
           type="email"

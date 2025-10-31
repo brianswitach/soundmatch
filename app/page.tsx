@@ -2,24 +2,45 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useChat } from "@ai-sdk/react";
-import { motion } from "framer-motion";
-import { Disc3, Music2, Sparkles } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Disc3, Music2, Sparkles, Menu, X } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { getFirebaseAuth } from "@/lib/firebaseClient";
+import { getFirebaseAuth, getFirebaseApp } from "@/lib/firebaseClient";
 import { onAuthStateChanged } from "firebase/auth";
+import { getFirestore, doc, getDoc, updateDoc, arrayUnion } from "firebase/firestore";
 
 export default function Home() {
   const { messages, sendMessage, status, setMessages, stop } = useChat();
   const [input, setInput] = useState("");
   const isLoading = status === "submitted" || status === "streaming";
   const router = useRouter();
-  const [userEmail, setUserEmail] = useState<string | null>(null);
+  const [userId, setUserId] = useState<string | null>(null);
+  const [isPro, setIsPro] = useState(false);
   const [showPaywall, setShowPaywall] = useState(false);
+  const [showMenu, setShowMenu] = useState(false);
+  const [favoriteSongs, setFavoriteSongs] = useState<string[]>([]);
 
   useEffect(() => {
     const auth = getFirebaseAuth();
     if (!auth) return;
-    const unsub = onAuthStateChanged(auth, (user) => setUserEmail(user?.email ?? null));
+    const unsub = onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        setUserId(user.uid);
+        const app = getFirebaseApp();
+        if (app) {
+          const db = getFirestore(app);
+          const snap = await getDoc(doc(db, "users", user.uid));
+          if (snap.exists()) {
+            setIsPro(snap.data()?.isPro === true);
+            setFavoriteSongs(snap.data()?.favoriteSongs ?? []);
+          }
+        }
+      } else {
+        setUserId(null);
+        setIsPro(false);
+        setFavoriteSongs([]);
+      }
+    });
     return () => unsub();
   }, []);
 
@@ -86,6 +107,57 @@ export default function Home() {
 
   return (
     <div className="min-h-screen flex items-center justify-center px-4">
+      {/* Hamburger menu button */}
+      <button
+        onClick={() => setShowMenu(true)}
+        className="fixed top-4 left-4 z-40 p-2 rounded-lg border border-white/15 bg-white/5 backdrop-blur-sm text-zinc-200 hover:bg-white/10"
+      >
+        <Menu className="h-6 w-6" />
+      </button>
+
+      {/* Sidebar menu */}
+      <AnimatePresence>
+        {showMenu && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowMenu(false)}
+              className="fixed inset-0 bg-black/50 z-50"
+            />
+            <motion.aside
+              initial={{ x: "-100%" }}
+              animate={{ x: 0 }}
+              exit={{ x: "-100%" }}
+              transition={{ type: "spring", damping: 25, stiffness: 200 }}
+              className="fixed left-0 top-0 bottom-0 w-80 bg-gradient-to-br from-[var(--sm-navy)] to-[var(--sm-charcoal)] border-r border-white/10 z-50 p-6 overflow-y-auto"
+            >
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-2xl font-semibold text-zinc-100">Menú</h2>
+                <button onClick={() => setShowMenu(false)} className="p-2 hover:bg-white/10 rounded-lg text-zinc-200">
+                  <X className="h-6 w-6" />
+                </button>
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold text-zinc-100 mb-3">Tus canciones favoritas</h3>
+                {favoriteSongs.length === 0 ? (
+                  <p className="text-sm text-zinc-400">Aún no agregaste canciones.</p>
+                ) : (
+                  <ul className="space-y-2">
+                    {favoriteSongs.map((song, idx) => (
+                      <li key={idx} className="text-sm text-zinc-300 bg-white/5 p-2 rounded border border-white/10">
+                        {song}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            </motion.aside>
+          </>
+        )}
+      </AnimatePresence>
+
       <main className="w-full max-w-3xl py-16">
         {/* Hero */}
         <section className="mb-10 text-center">
@@ -123,11 +195,14 @@ export default function Home() {
             </motion.button>
             <button
               onClick={() => setShowPaywall(true)}
-              className="ml-3 rounded-xl px-4 py-3 border border-white/15 text-zinc-100 hover:bg-white/5"
+              className={`ml-3 rounded-xl px-4 py-3 ${
+                isPro
+                  ? "bg-green-500/20 text-green-400 border border-green-400/30"
+                  : "border border-white/15 text-zinc-100 hover:bg-white/5"
+              }`}
             >
-              Plan gratis
+              {isPro ? "Plan PRO" : "Plan gratis"}
             </button>
-            <div className="mt-2 text-xs text-zinc-400">Plan gratis</div>
         </div>
         </section>
 
@@ -136,17 +211,35 @@ export default function Home() {
             e.preventDefault();
             const text = input.trim();
             if (!text) return;
-            // Free gating: guests get 2 usos
-            try {
-              if (!userEmail) {
-                const used = Number(localStorage.getItem("sm_uses") || "0");
-                if (used >= 2) {
-                  setShowPaywall(true);
-                  return;
+            // Free gating: guests get 2 usos; Pro users unlimited
+            if (!isPro) {
+              try {
+                if (!userId) {
+                  const used = Number(localStorage.getItem("sm_uses") || "0");
+                  if (used >= 2) {
+                    setShowPaywall(true);
+                    return;
+                  }
+                  localStorage.setItem("sm_uses", String(used + 1));
                 }
-                localStorage.setItem("sm_uses", String(used + 1));
-              }
-            } catch {}
+              } catch {}
+            }
+            // Save songs to Firestore
+            if (userId && text) {
+              try {
+                const app = getFirebaseApp();
+                if (app) {
+                  const db = getFirestore(app);
+                  const lines = text.split(/\n|,/).map(l => l.trim()).filter(Boolean);
+                  for (const line of lines) {
+                    const formatted = line.includes(" - ") ? line : line.replace(/\s+by\s+/i, " - ");
+                    await updateDoc(doc(db, "users", userId), {
+                      favoriteSongs: arrayUnion(formatted)
+                    });
+                  }
+                }
+              } catch {}
+            }
             // Empezar una "conversación" nueva por cada búsqueda
             // Detenemos cualquier stream previo, limpiamos mensajes y enviamos el nuevo prompt
             stop?.();
@@ -251,12 +344,14 @@ export default function Home() {
                 <button
                   className="flex-1 rounded-xl bg-[var(--sm-red)] hover:brightness-110 text-white py-3 text-lg font-semibold shadow-lg"
                   onClick={async () => {
-                    const email = userEmail || prompt("Ingresá tu email para continuar") || "";
-                    if (!email) return;
+                    if (!userId) {
+                      alert("Debés iniciar sesión para comprar el plan PRO.");
+                      return;
+                    }
                     const res = await fetch("/api/mp/create-preference", {
                       method: "POST",
                       headers: { "Content-Type": "application/json" },
-                      body: JSON.stringify({ email }),
+                      body: JSON.stringify({ userId }),
                     });
                     const data = await res.json();
                     if (data.url) location.href = data.url;

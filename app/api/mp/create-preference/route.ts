@@ -2,10 +2,13 @@ import { NextResponse } from "next/server";
 
 export async function POST(req: Request) {
   try {
-    const { email } = await req.json();
+    const { userId } = await req.json();
     const accessToken = process.env.MP_ACCESS_TOKEN;
     if (!accessToken) {
       return NextResponse.json({ error: "Missing MP_ACCESS_TOKEN" }, { status: 500 });
+    }
+    if (!userId) {
+      return NextResponse.json({ error: "Missing userId" }, { status: 400 });
     }
 
     const origin = (() => {
@@ -19,7 +22,7 @@ export async function POST(req: Request) {
     const host = req.headers.get("host") ?? "";
     const baseFromReq = host ? `${proto}://${host}` : origin;
     const base = (process.env.NEXT_PUBLIC_APP_URL || baseFromReq || origin || "").replace(/\/$/, "");
-    const success = `${base}/pro/success`;
+    const success = `${base}/pro/success?uid=${encodeURIComponent(userId)}`;
     const failure = `${base}/`;
     const notificationUrl = `${base}/api/mp/webhook`;
 
@@ -32,9 +35,9 @@ export async function POST(req: Request) {
           unit_price: 1.99,
         },
       ],
-      payer: email ? { email } : undefined,
       back_urls: { success, failure, pending: failure },
       notification_url: notificationUrl,
+      external_reference: userId,
     };
 
     if (!success) {
