@@ -47,7 +47,10 @@ export function getFirebaseDb(): Firestore | null {
   if (cachedDb) return cachedDb;
   try {
     // Evita problemas de transporte (400 Listen/Write) detrás de proxies/CDNs
-    cachedDb = initializeFirestore(app, { experimentalAutoDetectLongPolling: true });
+    cachedDb = initializeFirestore(app, {
+      experimentalForceLongPolling: true,
+      useFetchStreams: false,
+    });
   } catch (_e) {
     cachedDb = getFirestore(app);
   }
