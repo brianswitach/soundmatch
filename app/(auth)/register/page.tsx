@@ -1,9 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { getFirebaseAuth, getFirebaseApp } from "@/lib/firebaseClient";
+import { getFirebaseAuth, getFirebaseApp, getFirebaseDb } from "@/lib/firebaseClient";
 import { createUserWithEmailAndPassword, onAuthStateChanged, updateProfile } from "firebase/auth";
-import { getFirestore, doc, setDoc } from "firebase/firestore";
+import { doc, setDoc } from "firebase/firestore";
 import { useRouter } from "next/navigation";
 
 export default function RegisterPage() {
@@ -34,9 +34,8 @@ export default function RegisterPage() {
       }
       const userCred = await createUserWithEmailAndPassword(auth, email, password);
       await updateProfile(userCred.user, { displayName: name });
-      const app = getFirebaseApp();
-      if (app) {
-        const db = getFirestore(app);
+      const db = getFirebaseDb();
+      if (db) {
         await setDoc(doc(db, "users", userCred.user.uid), {
           name,
           email,

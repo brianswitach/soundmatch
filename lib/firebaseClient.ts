@@ -1,5 +1,6 @@
 import { initializeApp, getApps, getApp, type FirebaseApp } from "firebase/app";
 import { getAuth, type Auth } from "firebase/auth";
+import { initializeFirestore, getFirestore, type Firestore } from "firebase/firestore";
 
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -39,4 +40,17 @@ export function getFirebaseAuth(): Auth | null {
   return getAuth(app);
 }
 
+let cachedDb: Firestore | null = null;
+export function getFirebaseDb(): Firestore | null {
+  const app = getFirebaseApp();
+  if (!app) return null;
+  if (cachedDb) return cachedDb;
+  try {
+    // Evita problemas de transporte (400 Listen/Write) detrás de proxies/CDNs
+    cachedDb = initializeFirestore(app, { experimentalAutoDetectLongPolling: true });
+  } catch (_e) {
+    cachedDb = getFirestore(app);
+  }
+  return cachedDb;
+}
 

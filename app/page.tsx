@@ -5,9 +5,9 @@ import { useChat } from "@ai-sdk/react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Disc3, Music2, Sparkles, Menu, X } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { getFirebaseAuth, getFirebaseApp } from "@/lib/firebaseClient";
+import { getFirebaseAuth, getFirebaseApp, getFirebaseDb } from "@/lib/firebaseClient";
 import { onAuthStateChanged } from "firebase/auth";
-import { getFirestore, doc, getDoc, updateDoc, arrayUnion } from "firebase/firestore";
+import { doc, getDoc, updateDoc, arrayUnion } from "firebase/firestore";
 
 export default function Home() {
   const { messages, sendMessage, status, setMessages, stop } = useChat();
@@ -19,6 +19,7 @@ export default function Home() {
   const [showPaywall, setShowPaywall] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
   const [favoriteSongs, setFavoriteSongs] = useState<string[]>([]);
+  const [mpLoading, setMpLoading] = useState(false);
 
   useEffect(() => {
     const auth = getFirebaseAuth();
@@ -26,9 +27,8 @@ export default function Home() {
     const unsub = onAuthStateChanged(auth, async (user) => {
       if (user) {
         setUserId(user.uid);
-        const app = getFirebaseApp();
-        if (app) {
-          const db = getFirestore(app);
+        const db = getFirebaseDb();
+        if (db) {
           const snap = await getDoc(doc(db, "users", user.uid));
           if (snap.exists()) {
             setIsPro(snap.data()?.isPro === true);
@@ -227,9 +227,8 @@ export default function Home() {
             // Save songs to Firestore
             if (userId && text) {
               try {
-                const app = getFirebaseApp();
-                if (app) {
-                  const db = getFirestore(app);
+                const db = getFirebaseDb();
+                if (db) {
                   const lines = text.split(/\n|,/).map(l => l.trim()).filter(Boolean);
                   for (const line of lines) {
                     const formatted = line.includes(" - ") ? line : line.replace(/\s+by\s+/i, " - ");
@@ -342,22 +341,38 @@ export default function Home() {
               </div>
               <div className="flex flex-col sm:flex-row gap-3">
                 <button
-                  className="flex-1 rounded-xl bg-[var(--sm-red)] hover:brightness-110 text-white py-3 text-lg font-semibold shadow-lg"
+                  className="flex-1 rounded-xl bg-[var(--sm-red)] hover:brightness-110 text-white py-3 text-lg font-semibold shadow-lg disabled:opacity-60"
+                  disabled={mpLoading}
                   onClick={async () => {
                     if (!userId) {
                       alert("Debés iniciar sesión para comprar el plan PRO.");
                       return;
                     }
+                    setMpLoading(true);
                     const res = await fetch("/api/mp/create-preference", {
                       method: "POST",
                       headers: { "Content-Type": "application/json" },
                       body: JSON.stringify({ userId }),
                     });
                     const data = await res.json();
-                    if (data.url) location.href = data.url;
+                    if (data.url) {
+                      location.href = data.url;
+                    } else {
+                      setMpLoading(false);
+                    }
                   }}
                 >
-                  Comprar PRO
+                  {mpLoading ? (
+                    <span className="inline-flex items-center gap-2">
+                      <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24" fill="none">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
+                      </svg>
+                      Cargando...
+                    </span>
+                  ) : (
+                    "Comprar PRO"
+                  )}
                 </button>
                 <button
                   className="flex-1 rounded-xl border border-white/20 hover:bg-white/5 py-3 text-lg"

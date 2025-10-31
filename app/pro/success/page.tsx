@@ -2,8 +2,8 @@
 
 import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { getFirebaseApp } from "@/lib/firebaseClient";
-import { getFirestore, doc, updateDoc } from "firebase/firestore";
+import { getFirebaseApp, getFirebaseDb } from "@/lib/firebaseClient";
+import { doc, updateDoc } from "firebase/firestore";
 
 function ProSuccessContent() {
   const searchParams = useSearchParams();
@@ -15,12 +15,11 @@ function ProSuccessContent() {
       setStatus("Error: falta el UID del usuario.");
       return;
     }
-    const app = getFirebaseApp();
-    if (!app) {
+    const db = getFirebaseDb();
+    if (!db) {
       setStatus("Error: Firebase no disponible.");
       return;
     }
-    const db = getFirestore(app);
     updateDoc(doc(db, "users", uid), { isPro: true })
       .then(() => setStatus("¡Listo! Sos Pro 🎵"))
       .catch(() => setStatus("Error al actualizar tu plan. Contactanos."));
