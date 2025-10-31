@@ -207,7 +207,7 @@ export default function Home() {
         </section>
 
         <form
-          onSubmit={(e) => {
+          onSubmit={async (e) => {
             e.preventDefault();
             const text = input.trim();
             if (!text) return;
