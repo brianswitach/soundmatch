@@ -1,11 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { getFirebaseApp } from "@/lib/firebaseClient";
 import { getFirestore, doc, updateDoc } from "firebase/firestore";
 
-export default function ProSuccess() {
+function ProSuccessContent() {
   const searchParams = useSearchParams();
   const [status, setStatus] = useState("Procesando...");
 
@@ -33,6 +33,20 @@ export default function ProSuccess() {
         <p>Volvé a la <a href="/" className="underline text-[var(--sm-yellow)]">página principal</a> y empezá a descubrir sin límites.</p>
       </div>
     </div>
+  );
+}
+
+export default function ProSuccess() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center text-zinc-100">
+        <div className="rounded-xl border border-white/10 bg-white/5 p-8 text-center">
+          <h1 className="text-3xl font-semibold mb-2">Cargando...</h1>
+        </div>
+      </div>
+    }>
+      <ProSuccessContent />
+    </Suspense>
   );
 }
 
